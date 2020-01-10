@@ -236,6 +236,7 @@ def load_bids(dir_bids, subj_id, task, run_id):
     import os.path as op
     import numpy as np
     import pandas as pd
+    import json
 
     bids_fname_base = op.join(dir_bids, 'derivatives', 'epochs', subj_id, 'eeg',
                              '%s_task-%s_%s' % (subj_id, task,  run_id))
@@ -243,6 +244,12 @@ def load_bids(dir_bids, subj_id, task, run_id):
     fname_eeg = bids_fname_base + '_epochs.npy'
     fname_chans = bids_fname_base + '_channels.tsv'
     fname_elecs = bids_fname_base.replace(run_id, '') + 'electrodes.tsv' 
+    fname_coordsys = bids_fname_base.replace(run_id, 'coordsystem.json')
+
+    with open(fname_coordsys) as json_file:
+        coordsys = json.load(json_file)
+
+    fiducials = coordsys['AnatomicalLandmarkCoordinates']
 
     data = np.load(fname_eeg)
     chans = pd.read_csv(fname_chans, sep='\t')
@@ -250,7 +257,9 @@ def load_bids(dir_bids, subj_id, task, run_id):
 
     elecs = pd.read_csv(fname_elecs, sep='\t')
     dig_ch_pos = dict(zip(ch_names, elecs[['x', 'y', 'z']].values))
-    mont = mne.channels.DigMontage(dig_ch_pos=dig_ch_pos)
+
+    mont = mne.channels.make_dig_montage(dig_ch_pos, nasion=fiducials['NAS'],
+                                         rpa=fiducials['RPA'], lpa=fiducials['LPA'])
 
     info = mne.create_info(ch_names, sfreq=8000,  # todo: srate from bids file
                            ch_types=['eeg']*len(chans), montage=mont)

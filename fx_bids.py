@@ -259,11 +259,13 @@ def load_bids(dir_bids, subj_id, task, run_id):
     dig_ch_pos = dict(zip(ch_names, elecs[['x', 'y', 'z']].values))
 
     mont = mne.channels.make_dig_montage(dig_ch_pos, nasion=fiducials['NAS'],
-                                         rpa=fiducials['RPA'], lpa=fiducials['LPA'])
+                                         rpa=fiducials['RPA'], lpa=fiducials['LPA'],
+                                         coord_frame='head')
 
     info = mne.create_info(ch_names, sfreq=8000,  # todo: srate from bids file
-                           ch_types=['eeg']*len(chans), montage=mont)
+                           ch_types=['eeg']*len(chans))
     epo = mne.EpochsArray(data, info, tmin=-0.25)  # todo: tmin from bids file
+    epo.set_montage(mont)
 
     ch_status = chans.status.tolist()
     bads = [c for c, s in zip(ch_names, ch_status) if s == 'bad']
@@ -272,10 +274,9 @@ def load_bids(dir_bids, subj_id, task, run_id):
     return epo
 
 
+def load_trans(fname_trans):
+    import h5py
+    import mne
 
-
-
-
-
-
-
+    trans_ori = h5py.File(fname_trans).get('trans')[()]
+    trans = mne.transforms.Transform(fro='head', to='mri', trans=trans_ori)

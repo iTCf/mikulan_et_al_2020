@@ -8,7 +8,7 @@ import h5py
 import natsort
 from fx_bids import make_coordsys_ieeg_json, make_electrodes_ieeg_tsv, \
     make_coordsys_eeg_json, make_electrodes_eeg_tsv, export_data_bids, \
-    make_mri_json
+    make_events_json, make_mri_json
 
 
 program_help = 'Converts data to BIDS format'
@@ -22,7 +22,7 @@ parser.add_argument('-d', '--dir_base', help='Path to base data directory')
 parser.add_argument('-a', '--dir_anon', help='Path to anonymized MRIs')
 
 args = parser.parse_args()
-dir_out = os.path.join(args.dir_base, 'share', 'EEG-source-loc-stim')
+dir_out = os.path.join(args.dir_base, 'share', 'gnode', 'Localize-MI')
 dir_spatial = os.path.join(args.dir_base, 'spatial')
 
 if not os.path.isfile(args.runs_table):
@@ -83,8 +83,13 @@ for s in subjects:
     subj_chans = list(set([c.split('_')[0] for c in subj_chans]))
     subj_ch_mono = []
     for c in subj_chans:
-        subj_ch_mono.append(c.split('-')[0])
-        subj_ch_mono.append(c[0] + c.split('-')[-1])
+        ch1 = c.split('-')[0]
+        subj_ch_mono.append(ch1)
+        if '\'' in ch1:
+            subj_ch_mono.append(c[0] + '\'' + c.split('-')[-1])
+        else:
+            subj_ch_mono.append(c[0] + c.split('-')[-1])
+
     subj_ch_mono = natsort.natsorted(list(set(subj_ch_mono)))
 
     ch_info = pd.read_csv(os.path.join(dir_spatial, 'ch_info', '%s_seeg_ch_info.csv' % subj_code))
@@ -95,10 +100,15 @@ for s in subjects:
     # eeg coordsystem
     dir_coordsys_eeg = os.path.join(dir_out, 'derivatives', 'epochs',
                                     subj_id, 'eeg')
-    make_coordsys_eeg_json(dir_coordsys_eeg, runs_table.fname[0], subj_id, task)
+    make_coordsys_eeg_json(dir_coordsys_eeg, subj_runs.fname.iloc[0], subj_id, task)
 
     # eeg electrodes
-    make_electrodes_eeg_tsv(dir_coordsys_eeg, runs_table.fname[0], subj_id, task)
+    make_electrodes_eeg_tsv(dir_coordsys_eeg, subj_runs.fname.iloc[0], subj_id, task)
+
+    # events json
+    fname_events_json = os.path.join(dir_out, 'derivatives', 'epochs',
+                                     subj_id, 'eeg', '%s_task-%s_events.json' % (subj_id, task))
+    # make_events_json(fname_events_json) # FIX, not needed
 
     # mri json
     make_mri_json(subj_id, dir_out)

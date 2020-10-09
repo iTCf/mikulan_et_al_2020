@@ -280,3 +280,4 @@ def load_trans(fname_trans):
 
     trans_ori = h5py.File(fname_trans).get('trans')[()]
     trans = mne.transforms.Transform(fro='head', to='mri', trans=trans_ori)
+    return trans

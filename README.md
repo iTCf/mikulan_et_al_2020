@@ -4,6 +4,7 @@ This repository contains usage demonstration scripts and the code used for the p
 
 [Mikulan, E. et al. Simultaneous human intracerebral stimulation and HD-EEG, ground-truth for source localization methods. Scientific Data 7, 1–8 (2020).](https://www.nature.com/articles/s41597-020-0467-x)
 
+Please make sure to download the latest version of the dataset which can be found [here](https://gin.g-node.org/ezemikulan/Localize-MI)
 
 
 _Running the demonstration_
